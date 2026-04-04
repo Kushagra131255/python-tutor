@@ -410,3 +410,240 @@ body {
     .chat-container { border-radius: 16px; }
     .app-container { border-radius: 0; }
 }
+
+/* ═══════════════════════════════════════════════════
+   APPEND THIS TO THE BOTTOM OF YOUR style.css
+   ═══════════════════════════════════════════════════ */
+
+/* ── Settings button in sidebar footer ────────────── */
+.settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 14px;
+  background: none;
+  border: 1px solid #ffffff0d;
+  border-radius: var(--radius-sm);
+  color: var(--white-muted);
+  font-family: var(--font-main);
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--trans);
+  margin-bottom: 8px;
+}
+
+.settings-btn:hover {
+  background: var(--neon-glow);
+  border-color: var(--neon-dim);
+  color: var(--neon);
+}
+
+/* ── Settings Modal ────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.show { display: flex; }
+
+.settings-modal {
+  background: var(--black-2);
+  border: 1px solid #ffffff0d;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 301;
+  box-shadow: 0 24px 80px #00000088;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #ffffff08;
+}
+
+.settings-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.close-settings {
+  background: none;
+  border: none;
+  color: var(--white-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: var(--trans);
+}
+
+.close-settings:hover { background: var(--black-4); color: var(--white); }
+
+/* ── Settings section ──────────────────────────────── */
+.settings-section {
+  padding: 20px 24px;
+}
+
+.settings-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neon);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.settings-section-desc {
+  font-size: 12px;
+  color: var(--white-muted);
+  margin-bottom: 16px;
+}
+
+/* ── Face status card ──────────────────────────────── */
+.face-status-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--black-3);
+  border: 1px solid #ffffff08;
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.face-status-icon { font-size: 28px; }
+
+.face-status-text { flex: 1; }
+
+.face-status-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 2px;
+}
+
+.face-status-sub {
+  font-size: 11px;
+  color: var(--white-muted);
+}
+
+.face-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #ffffff15;
+  color: var(--white-muted);
+}
+
+/* ── Face action buttons ───────────────────────────── */
+.btn-setting-primary {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--neon-dark), var(--neon));
+  color: var(--black);
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: var(--trans);
+  box-shadow: 0 0 16px var(--neon-dim);
+  margin-bottom: 8px;
+}
+
+.btn-setting-primary:hover {
+  box-shadow: 0 0 28px var(--neon-dim);
+  transform: translateY(-1px);
+}
+
+.btn-setting-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-setting-ghost {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid #ffffff0d;
+  color: var(--white-muted);
+  font-family: var(--font-main);
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--trans);
+}
+
+.btn-setting-ghost:hover { border-color: #ffffff25; color: var(--white); }
+
+/* ── Face camera area in settings ──────────────────── */
+.face-camera-area {
+  padding: 0 24px 20px;
+  text-align: center;
+}
+
+.face-cam-circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--neon-dim);
+  box-shadow: 0 0 20px var(--neon-glow);
+  margin: 0 auto 12px;
+  position: relative;
+  background: var(--black-3);
+}
+
+#settingsVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.scan-ring-sm {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px dashed var(--neon);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation: spin 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+.face-cam-status {
+  font-size: 12px;
+  color: var(--white-muted);
+  margin-bottom: 14px;
+  min-height: 18px;
+}
+
+.face-cam-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+</style>
+
