@@ -1,263 +1,528 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>PyTutor</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyTutor — AI Python Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<link href="https://fonts.googleapis.com/css2?family=Outfit" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body>
-<div class="app-container">
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">🐍</div>
-            <span>PyTutor</span>
-        </div>
-        <div class="user-info-box">
-            <div class="user-avatar" id="userAvatar">👤</div>
-            <div class="user-details">
-                <div class="user-name" id="userName">Loading...</div>
-            </div>
-        </div>
-        <button class="new-chat-btn" onclick="createNewChat()">➕ New Chat</button>
-        <div class="sessions-section">
-            <div class="sessions-title">Chat History</div>
-            <div class="sessions-list" id="sessionsList"></div>
-        </div>
-        <div class="sidebar-footer">
-            <button class="logout-btn" onclick="logout()">↪ Logout</button>
-        </div>
+
+<div class="app-shell">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-brand">
+      <div class="brand-icon">🐍</div>
+      <span class="brand-name">PyTutor</span>
+      <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
     </div>
 
-    <div class="chat-container">
-        <div class="chat-header">
-            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-            <div class="header-title">
-                <h1>PyTutor</h1>
-                <p id="chatTitle">New Chat</p>
-            </div>
-            <div class="header-actions">
-                <button class="delete-btn" onclick="deleteCurrentChat()">🗑️</button>
-            </div>
-        </div>
-        <div id="chatMessages" class="chat-messages"></div>
-        <div class="quick-actions">
-            <button onclick="sendQuick('help')">📋 Help</button>
-            <button onclick="sendQuick('topics')">📚 Topics</button>
-            <button onclick="sendQuick('quiz')">🧪 Quiz</button>
-        </div>
-        <div class="chat-input-area">
-            <input id="userInput" type="text" placeholder="Ask me about Python..." autocomplete="off" ondrop="return false;" ondragstart="return false;">
-            <button id="sendBtn" onclick="handleSend()">Send</button>
-            <button id="stopBtn" onclick="stopTyping()" style="display:none;">⏹ Stop</button>
-        </div>
+    <div class="user-card">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <div class="user-meta">
+        <div class="user-name" id="userName">Loading...</div>
+        <div class="user-badge">Python Learner</div>
+      </div>
     </div>
+
+    <button class="new-chat-btn" onclick="createNewChat()">
+      <span class="btn-icon">＋</span>
+      <span>New Chat</span>
+    </button>
+
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        class="search-input"
+        id="searchInput"
+        type="text"
+        placeholder="Search chats..."
+        oninput="filterSessions(this.value)"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="sessions-header">Chat History</div>
+    <div class="sessions-list" id="sessionsList"></div>
+
+    <div class="sidebar-footer">
+      <button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
+      <button class="logout-btn" onclick="logout()">⏻ Logout</button>
+    </div>
+
+  </aside>
+
+  <!-- ═══════════════ MAIN CHAT ═══════════════ -->
+  <main class="chat-main">
+
+    <header class="chat-header">
+      <button class="menu-btn" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="header-center">
+        <div class="header-logo">🐍</div>
+        <div class="header-titles">
+          <h1>PyTutor</h1>
+          <p id="chatTitle">New Chat</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn delete-btn" onclick="deleteCurrentChat()" title="Delete chat">🗑</button>
+      </div>
+    </header>
+
+    <div class="messages-wrap" id="chatMessages"></div>
+
+    <div class="input-section">
+      <div class="quick-pills">
+        <button class="pill" onclick="sendQuick('help')">📋 Help</button>
+        <button class="pill" onclick="sendQuick('topics')">📚 Topics</button>
+        <button class="pill" onclick="sendQuick('roadmap')">🗺️ Roadmap</button>
+        <button class="pill" onclick="sendQuick('quiz')">🧪 Quiz</button>
+        <button class="pill" onclick="sendQuick('cheat sheet')">📝 Cheat Sheet</button>
+      </div>
+      <div class="input-bar">
+        <input
+          id="userInput"
+          type="text"
+          placeholder="Ask me anything about Python..."
+          autocomplete="off"
+          ondrop="return false;"
+        >
+        <button id="sendBtn" class="send-btn" onclick="handleSend()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+        <button id="stopBtn" class="stop-btn" onclick="stopTyping()" style="display:none;">⏹</button>
+      </div>
+      <div class="input-hint">Press Enter to send · PyTutor v1.0</div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════ OVERLAY ═══════════════ -->
+<div class="overlay" id="overlay" onclick="closePanels()"></div>
+
+<!-- ═══════════════ SETTINGS MODAL ═══════════════ -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="settings-modal">
+    <div class="settings-header">
+      <h2>⚙️ Settings</h2>
+      <button class="close-settings" onclick="closeSettings()">✕</button>
+    </div>
+
+    <!-- Face Recognition Section -->
+    <div class="settings-section">
+      <div class="settings-section-title">😊 Face Recognition</div>
+      <div class="settings-section-desc">Log in using your face instead of a password.</div>
+
+      <div class="face-status-card" id="faceStatusCard">
+        <div class="face-status-icon" id="faceStatusIcon">😶</div>
+        <div class="face-status-text">
+          <div class="face-status-label" id="faceStatusLabel">Not set up</div>
+          <div class="face-status-sub" id="faceStatusSub">Add your face to enable quick login</div>
+        </div>
+        <div class="face-status-badge" id="faceStatusBadge">OFF</div>
+      </div>
+
+      <div class="face-actions" id="faceActions">
+        <button class="btn-setting-primary" id="faceActionBtn" onclick="handleFaceAction()">
+          😊 Set Up Face Login
+        </button>
+      </div>
+    </div>
+
+    <!-- Camera Area (shown during setup) -->
+    <div class="face-camera-area" id="faceCameraArea" style="display:none;">
+      <div class="face-cam-circle" id="faceCamCircle">
+        <video id="settingsVideo" autoplay muted playsinline></video>
+        <div class="scan-ring-sm"></div>
+      </div>
+      <p class="face-cam-status" id="faceCamStatus">Initializing camera...</p>
+      <div class="face-cam-btns">
+        <button class="btn-setting-primary" id="captureSettingsBtn" onclick="captureSettings()" disabled>
+          📸 Capture Face
+        </button>
+        <button class="btn-setting-ghost" onclick="cancelFaceSetup()">Cancel</button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <script>
+const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
 let currentSessionId = null;
 let typingTimeout = null;
 let isCurrentlyTyping = false;
+let allSessions = [];
+let modelsLoaded = false;
+let settingsStream = null;
+let faceEnabled = false;
 
+// ─── Buttons ────────────────────────────────────────
 function resetButtons() {
-    document.getElementById('sendBtn').style.display = 'inline-block';
-    document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('sendBtn').style.display = 'flex';
+  document.getElementById('stopBtn').style.display = 'none';
 }
-
 function stopTyping() {
-    isCurrentlyTyping = false;
-    clearTimeout(typingTimeout);
-    resetButtons();
-    document.getElementById('typingIndicator')?.remove();
+  isCurrentlyTyping = false;
+  clearTimeout(typingTimeout);
+  resetButtons();
+  document.getElementById('typingIndicator')?.remove();
 }
 
+// ─── Messages ───────────────────────────────────────
 function addMessage(text, sender) {
-    const chat = document.getElementById("chatMessages");
-    const msg = document.createElement("div");
-    msg.className = "message " + sender;
-    msg.textContent = text;
-    chat.appendChild(msg);
-    chat.scrollTop = chat.scrollHeight;
+  const wrap = document.getElementById('chatMessages');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + sender;
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar';
+  avatar.textContent = sender === 'bot' ? '🐍' : (document.getElementById('userAvatar').textContent || '👤');
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+  if (sender === 'bot') { row.appendChild(avatar); row.appendChild(bubble); }
+  else { row.appendChild(bubble); row.appendChild(avatar); }
+  wrap.appendChild(row);
+  wrap.scrollTop = wrap.scrollHeight;
 }
 
 function showTyping() {
-    const chat = document.getElementById("chatMessages");
-    const div = document.createElement("div");
-    div.className = "typing-indicator";
-    div.id = "typingIndicator";
-    div.innerHTML = "<span></span><span></span><span></span>";
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+  const wrap = document.getElementById('chatMessages');
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.id = 'typingIndicator';
+  row.innerHTML = `<div class="msg-avatar">🐍</div><div class="msg-bubble typing-bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
+  wrap.appendChild(row);
+  wrap.scrollTop = wrap.scrollHeight;
 }
 
-function hideTyping() {
-    document.getElementById("typingIndicator")?.remove();
-}
-
-async function handleSend() {
-    const input = document.getElementById("userInput");
-    const text = input.value.trim();
-    if(!text) return;
-    
-    addMessage(text, "user");
-    input.value = "";
-    document.getElementById('sendBtn').style.display = 'none';
-    document.getElementById('stopBtn').style.display = 'inline-block';
-    
-    showTyping();
-    await new Promise(r => setTimeout(r, 1000));
-    hideTyping();
-    
-    try {
-        const res = await fetch("/chat", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({message: text, session_id: currentSessionId})
-        });
-        const data = await res.json();
-        if(data.response) typeMessage(data.response);
-    } catch(e) {
-        hideTyping();
-        addMessage("Error: " + e.message, "bot");
-        resetButtons();
-    }
-}
+function hideTyping() { document.getElementById('typingIndicator')?.remove(); }
 
 function typeMessage(text) {
-    const chat = document.getElementById("chatMessages");
-    const msg = document.createElement("div");
-    msg.className = "message bot";
-    chat.appendChild(msg);
-    isCurrentlyTyping = true;
-    let i = 0;
-    function type() {
-        if(!isCurrentlyTyping || i >= text.length) {
-            isCurrentlyTyping = false;
-            resetButtons();
-            return;
-        }
-        msg.textContent += text[i];
-        i++;
-        chat.scrollTop = chat.scrollHeight;
-        typingTimeout = setTimeout(type, 30);
-    }
-    type();
+  const wrap = document.getElementById('chatMessages');
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar';
+  avatar.textContent = '🐍';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  row.appendChild(avatar); row.appendChild(bubble);
+  wrap.appendChild(row);
+  isCurrentlyTyping = true;
+  let i = 0;
+  function type() {
+    if (!isCurrentlyTyping || i >= text.length) { isCurrentlyTyping = false; resetButtons(); return; }
+    bubble.textContent += text[i]; i++;
+    wrap.scrollTop = wrap.scrollHeight;
+    typingTimeout = setTimeout(type, 18);
+  }
+  type();
 }
 
-function sendQuick(t) {
-    document.getElementById("userInput").value = t;
-    handleSend();
+// ─── Send ────────────────────────────────────────────
+async function handleSend() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+  addMessage(text, 'user');
+  input.value = '';
+  document.getElementById('sendBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'flex';
+  showTyping();
+  await new Promise(r => setTimeout(r, 800));
+  hideTyping();
+  try {
+    const res = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, session_id: currentSessionId })
+    });
+    const data = await res.json();
+    if (data.response) typeMessage(data.response);
+  } catch (e) {
+    hideTyping();
+    addMessage('⚠️ Connection error. Please try again.', 'bot');
+    resetButtons();
+  }
 }
 
+function sendQuick(t) { document.getElementById('userInput').value = t; handleSend(); }
+
+// ─── Sessions ────────────────────────────────────────
 async function createNewChat() {
-    try {
-        const res = await fetch('/api/sessions', {method:'POST'});
-        const data = await res.json();
-        currentSessionId = data.session_id;
-        document.getElementById('chatMessages').innerHTML = '';
-        document.getElementById('chatTitle').textContent = 'New Chat';
-        
-        showTyping();
-        await new Promise(r => setTimeout(r, 1000));
-        const wr = await fetch('/welcome');
-        const wd = await wr.json();
-        hideTyping();
-        typeMessage(wd.response);
-        loadSessions();
-    } catch(e) { hideTyping(); addMessage("Error", "bot"); }
+  try {
+    const res = await fetch('/api/sessions', { method: 'POST' });
+    const data = await res.json();
+    currentSessionId = data.session_id;
+    document.getElementById('chatMessages').innerHTML = '';
+    document.getElementById('chatTitle').textContent = 'New Chat';
+    closePanels();
+    showTyping();
+    await new Promise(r => setTimeout(r, 800));
+    const wr = await fetch('/welcome');
+    const wd = await wr.json();
+    hideTyping();
+    typeMessage(wd.response);
+    loadSessions();
+  } catch (e) { hideTyping(); addMessage('Error starting chat.', 'bot'); }
 }
 
 async function deleteCurrentChat() {
-    if(!currentSessionId) return;
-    if(!confirm("Delete this chat?")) return;
-    
-    try {
-        // Delete current session
-        await fetch('/api/sessions/'+currentSessionId, {method:'DELETE'});
-        
-        // Get remaining sessions
-        const res = await fetch('/api/sessions');
-        const data = await res.json();
-        
-        document.getElementById('chatMessages').innerHTML = '';
-        
-        if(data.sessions && data.sessions.length > 0) {
-            // Load the first available session
-            const firstSession = data.sessions[0];
-            await loadSession(firstSession.id);
-        } else {
-            // No sessions left, create new one
-            await createNewChat();
-        }
-        
-        loadSessions();
-    } catch(e) { 
-        console.error(e); 
-    }
+  if (!currentSessionId) return;
+  if (!confirm('Delete this chat?')) return;
+  try {
+    await fetch('/api/sessions/' + currentSessionId, { method: 'DELETE' });
+    const res = await fetch('/api/sessions');
+    const data = await res.json();
+    document.getElementById('chatMessages').innerHTML = '';
+    if (data.sessions && data.sessions.length > 0) await loadSession(data.sessions[0].id);
+    else await createNewChat();
+    loadSessions();
+  } catch (e) { console.error(e); }
 }
 
 async function loadSessions() {
-    try {
-        const res = await fetch('/api/sessions');
-        const data = await res.json();
-        const list = document.getElementById('sessionsList');
-        list.innerHTML = '';
-        if(data.sessions) {
-            data.sessions.forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
-                div.textContent = s.title;
-                div.onclick = () => loadSession(s.id);
-                list.appendChild(div);
-            });
-        }
-    } catch(e) { console.error(e); }
+  try {
+    const res = await fetch('/api/sessions');
+    const data = await res.json();
+    allSessions = data.sessions || [];
+    renderSessions(allSessions);
+  } catch (e) { console.error(e); }
+}
+
+function renderSessions(sessions) {
+  const list = document.getElementById('sessionsList');
+  list.innerHTML = '';
+  if (!sessions.length) { list.innerHTML = '<div class="no-sessions">No chats yet</div>'; return; }
+  sessions.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
+    div.innerHTML = `<span class="session-icon">💬</span><span class="session-title">${s.title}</span>`;
+    div.onclick = () => loadSession(s.id);
+    list.appendChild(div);
+  });
+}
+
+function filterSessions(q) {
+  renderSessions(allSessions.filter(s => s.title.toLowerCase().includes(q.toLowerCase())));
 }
 
 async function loadSession(id) {
-    try {
-        const res = await fetch('/api/sessions/'+id+'/messages');
-        const data = await res.json();
-        currentSessionId = id;
-        
-        const chatDiv = document.getElementById('chatMessages');
-        chatDiv.innerHTML = '';
-        chatDiv.style.overflow = 'auto';
-        
-        document.getElementById('chatTitle').textContent = data.title || 'Chat';
-        
-        if(data.messages) {
-            data.messages.forEach(m => addMessage(m.content, m.role));
-        }
-        
-        setTimeout(() => {
-            chatDiv.scrollTop = chatDiv.scrollHeight;
-        }, 100);
-        
-        document.getElementById('sidebar').classList.remove('open');
-        loadSessions();
-    } catch(e) { alert("Error loading chat"); }
+  try {
+    const res = await fetch('/api/sessions/' + id + '/messages');
+    const data = await res.json();
+    currentSessionId = id;
+    const wrap = document.getElementById('chatMessages');
+    wrap.innerHTML = '';
+    document.getElementById('chatTitle').textContent = data.title || 'Chat';
+    (data.messages || []).forEach(m => addMessage(m.content, m.role));
+    setTimeout(() => wrap.scrollTop = wrap.scrollHeight, 100);
+    closePanels();
+    loadSessions();
+  } catch (e) { alert('Error loading chat'); }
+}
+
+// ─── Sidebar / overlay ───────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+function closePanels() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ─── Settings Modal ──────────────────────────────────
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
+  loadFaceStatus();
+}
+
+function closeSettings() {
+  cancelFaceSetup();
+  document.getElementById('settingsModal').classList.remove('show');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+async function loadFaceStatus() {
+  try {
+    const res = await fetch('/api/face/status');
+    const data = await res.json();
+    faceEnabled = data.face_enabled;
+    updateFaceUI(faceEnabled);
+  } catch(e) {}
+}
+
+function updateFaceUI(enabled) {
+  const icon = document.getElementById('faceStatusIcon');
+  const label = document.getElementById('faceStatusLabel');
+  const sub = document.getElementById('faceStatusSub');
+  const badge = document.getElementById('faceStatusBadge');
+  const btn = document.getElementById('faceActionBtn');
+
+  if (enabled) {
+    icon.textContent = '😊';
+    label.textContent = 'Face login active';
+    sub.textContent = 'You can sign in using your face';
+    badge.textContent = 'ON';
+    badge.style.color = '#00ffaa';
+    badge.style.borderColor = '#00ffaa44';
+    badge.style.background = '#00ffaa11';
+    btn.textContent = '🗑 Remove Face Data';
+    btn.style.background = '#ff446622';
+    btn.style.border = '1px solid #ff446644';
+    btn.style.color = '#ff4466';
+  } else {
+    icon.textContent = '😶';
+    label.textContent = 'Not set up';
+    sub.textContent = 'Add your face to enable quick login';
+    badge.textContent = 'OFF';
+    badge.style.color = '#5a6070';
+    badge.style.borderColor = '#ffffff15';
+    badge.style.background = 'transparent';
+    btn.textContent = '😊 Set Up Face Login';
+    btn.style.background = '';
+    btn.style.border = '';
+    btn.style.color = '';
+  }
+}
+
+async function handleFaceAction() {
+  if (faceEnabled) {
+    if (!confirm('Remove your face data? You will no longer be able to log in with your face.')) return;
+    const res = await fetch('/api/face/remove', { method: 'DELETE' });
+    if (res.ok) { faceEnabled = false; updateFaceUI(false); }
+  } else {
+    startFaceSetup();
+  }
+}
+
+// ─── Face Setup in Settings ──────────────────────────
+async function startFaceSetup() {
+  document.getElementById('faceActions').style.display = 'none';
+  document.getElementById('faceCameraArea').style.display = 'block';
+  document.getElementById('faceCamStatus').textContent = 'Starting camera...';
+  document.getElementById('captureSettingsBtn').disabled = true;
+
+  try {
+    settingsStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    const video = document.getElementById('settingsVideo');
+    video.srcObject = settingsStream;
+
+    if (!modelsLoaded) {
+      document.getElementById('faceCamStatus').textContent = 'Loading AI models...';
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+      ]);
+      modelsLoaded = true;
+    }
+
+    document.getElementById('faceCamStatus').textContent = 'Position your face in the circle, then click Capture.';
+    document.getElementById('captureSettingsBtn').disabled = false;
+  } catch (e) {
+    document.getElementById('faceCamStatus').textContent = 'Camera access denied. Please allow camera access.';
+  }
+}
+
+async function captureSettings() {
+  const video = document.getElementById('settingsVideo');
+  const btn = document.getElementById('captureSettingsBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Processing...';
+  document.getElementById('faceCamStatus').textContent = 'Detecting face...';
+
+  try {
+    const det = await faceapi
+      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!det) {
+      document.getElementById('faceCamStatus').textContent = '❌ No face detected. Look directly at the camera.';
+      btn.disabled = false;
+      btn.textContent = '📸 Capture Face';
+      return;
+    }
+
+    const descriptor = Array.from(det.descriptor);
+    const res = await fetch('/api/face/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descriptor })
+    });
+
+    if (res.ok) {
+      document.getElementById('faceCamStatus').textContent = '✅ Face registered successfully!';
+      stopSettingsCamera();
+      faceEnabled = true;
+      updateFaceUI(true);
+      setTimeout(() => {
+        document.getElementById('faceCameraArea').style.display = 'none';
+        document.getElementById('faceActions').style.display = 'block';
+      }, 1500);
+    } else {
+      throw new Error('Registration failed');
+    }
+  } catch(e) {
+    document.getElementById('faceCamStatus').textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = '📸 Capture Face';
+  }
+}
+
+function cancelFaceSetup() {
+  stopSettingsCamera();
+  document.getElementById('faceCameraArea').style.display = 'none';
+  document.getElementById('faceActions').style.display = 'block';
+  document.getElementById('captureSettingsBtn').textContent = '📸 Capture Face';
+}
+
+function stopSettingsCamera() {
+  if (settingsStream) {
+    settingsStream.getTracks().forEach(t => t.stop());
+    settingsStream = null;
+  }
+}
+
+// ─── User info ───────────────────────────────────────
+async function loadUserInfo() {
+  const res = await fetch('/api/user');
+  if (res.ok) {
+    const data = await res.json();
+    document.getElementById('userName').textContent = data.name || 'User';
+    document.getElementById('userAvatar').textContent = data.name ? data.name[0].toUpperCase() : '?';
+    faceEnabled = data.face_enabled;
+  }
 }
 
 function logout() { window.location.href = '/logout'; }
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
-document.getElementById("userInput").addEventListener("keydown", e => {
-    if(e.key === "Enter") handleSend();
+// ─── Keyboard ────────────────────────────────────────
+document.getElementById('userInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSend();
 });
 
-async function loadUserInfo() {
-    const res = await fetch('/api/user');
-    if(res.ok) {
-        const data = await res.json();
-        document.getElementById('userName').textContent = data.name || 'User';
-        document.getElementById('userAvatar').textContent = data.name ? data.name[0].toUpperCase() : '👤';
-    }
-}
-
+// ─── Init ────────────────────────────────────────────
 window.onload = async () => {
-    await loadUserInfo();
-    await loadSessions();
-    await createNewChat();
+  await loadUserInfo();
+  await loadSessions();
+  await createNewChat();
 };
 </script>
 </body>
