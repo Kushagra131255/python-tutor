@@ -6,339 +6,93 @@
 <title>PyTutor — Login</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<!-- BUG FIX: Remove "defer" — face-api must be available before any script runs -->
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
   :root {
-    --black: #050508;
-    --black-2: #0c0c12;
-    --black-3: #111118;
-    --black-4: #18181f;
-    --neon: #00c8ff;
-    --neon-dim: #00c8ff55;
-    --neon-glow: #00c8ff22;
-    --neon-dark: #0090bb;
-    --white: #f0f4ff;
-    --white-dim: #a0aac0;
-    --white-muted: #5a6070;
-    --danger: #ff4466;
-    --success: #00ffaa;
+    --black:#050508;--black-2:#0c0c12;--black-3:#111118;--black-4:#18181f;
+    --neon:#00c8ff;--neon-dim:#00c8ff55;--neon-glow:#00c8ff22;--neon-dark:#0090bb;
+    --white:#f0f4ff;--white-dim:#a0aac0;--white-muted:#5a6070;
+    --danger:#ff4466;--success:#00ffaa;
   }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Exo 2',sans-serif;background:var(--black);color:var(--white);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  body::before{content:'';position:fixed;inset:0;
+    background-image:linear-gradient(#ffffff03 1px,transparent 1px),linear-gradient(90deg,#ffffff03 1px,transparent 1px);
+    background-size:40px 40px;pointer-events:none}
+  .card{background:var(--black-2);border:1px solid #ffffff0d;border-radius:20px;
+    padding:40px 36px;width:100%;max-width:420px;position:relative;z-index:1}
+  .logo-row{text-align:center;margin-bottom:24px}
+  .logo{font-size:44px;filter:drop-shadow(0 0 12px var(--neon))}
+  h1{font-size:24px;font-weight:700;
+    background:linear-gradient(90deg,var(--neon),#7df9ff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    text-align:center;margin-bottom:4px}
+  .tagline{text-align:center;font-size:12px;color:var(--white-muted);margin-bottom:28px}
+  .tabs{display:flex;background:var(--black-3);border-radius:10px;padding:4px;margin-bottom:24px;gap:4px}
+  .tab{flex:1;padding:9px;border:none;border-radius:8px;background:none;color:var(--white-muted);
+    font-family:'Exo 2',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+  .tab.active{background:linear-gradient(135deg,var(--neon-dark),var(--neon));
+    color:var(--black);box-shadow:0 0 12px var(--neon-dim)}
+  .form-group{margin-bottom:14px}
+  label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;
+    letter-spacing:1px;color:var(--white-muted);margin-bottom:6px}
+  input[type="text"],input[type="email"],input[type="password"]{
+    width:100%;background:var(--black-4);border:1px solid #ffffff0d;border-radius:10px;
+    padding:11px 14px;font-family:'Exo 2',sans-serif;font-size:14px;color:var(--white);
+    outline:none;transition:all 0.2s}
+  input:focus{border-color:var(--neon-dim);box-shadow:0 0 0 3px var(--neon-glow);background:var(--black-3)}
+  input::placeholder{color:var(--white-muted)}
+  .btn{width:100%;padding:13px;border-radius:10px;font-family:'Exo 2',sans-serif;
+    font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all 0.2s;margin-top:6px}
+  .btn-primary{background:linear-gradient(135deg,var(--neon-dark),var(--neon));
+    color:var(--black);box-shadow:0 0 20px var(--neon-dim)}
+  .btn-primary:hover{box-shadow:0 0 30px var(--neon-dim),0 0 60px var(--neon-glow);transform:translateY(-1px)}
+  .btn-face{background:var(--black-4);border:1px solid var(--neon-dim);color:var(--neon);
+    display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px}
+  .btn-face:hover{background:var(--neon-glow);box-shadow:0 0 20px var(--neon-glow)}
+  .divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--white-muted);font-size:11px}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:#ffffff0d}
+  #errorMsg{display:none;background:#ff446615;border:1px solid #ff446640;border-radius:8px;
+    padding:10px 14px;font-size:12px;color:var(--danger);margin-top:12px;text-align:center}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* Face modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:#000000bb;
+    backdrop-filter:blur(4px);z-index:999;align-items:center;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal{background:var(--black-2);border:1px solid #ffffff0d;border-radius:20px;
+    padding:36px;width:90%;max-width:380px;text-align:center}
+  .modal h2{font-size:18px;margin-bottom:8px}
+  .modal p{font-size:12px;color:var(--white-muted);margin-bottom:20px}
+  .camera-circle{width:200px;height:200px;border-radius:50%;overflow:hidden;
+    margin:0 auto 16px;border:2px solid var(--black-4);background:var(--black-3);
+    display:flex;align-items:center;justify-content:center;position:relative;transition:border-color 0.3s}
+  .camera-circle.scanning{border-color:var(--neon);box-shadow:0 0 24px var(--neon-dim)}
+  .camera-circle.found{border-color:var(--success);box-shadow:0 0 24px #00ffaa44}
+  .camera-circle.fail{border-color:var(--danger);box-shadow:0 0 24px #ff446644}
 
-  body {
-    font-family: 'Exo 2', sans-serif;
-    background: var(--black);
-    color: var(--white);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
+  /* BUG FIX: video must fill the circle */
+  #faceVideo{position:absolute;top:0;left:0;width:100%;height:100%;
+    object-fit:cover;transform:scaleX(-1)}
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(#ffffff03 1px, transparent 1px),
-      linear-gradient(90deg, #ffffff03 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-  }
+  .scan-ring{position:absolute;width:120px;height:120px;border-radius:50%;
+    border:2px dashed var(--neon);animation:spinRing 3s linear infinite;pointer-events:none}
+  @keyframes spinRing{to{transform:rotate(360deg)}}
 
-  .card {
-    background: var(--black-2);
-    border: 1px solid #ffffff0d;
-    border-radius: 20px;
-    padding: 40px 36px;
-    width: 100%;
-    max-width: 420px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .logo-row {
-    text-align: center;
-    margin-bottom: 24px;
-  }
-
-  .logo { font-size: 44px; filter: drop-shadow(0 0 12px var(--neon)); }
-
-  h1 {
-    font-size: 24px;
-    font-weight: 700;
-    background: linear-gradient(90deg, var(--neon), #7df9ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-align: center;
-    margin-bottom: 4px;
-  }
-
-  .tagline {
-    text-align: center;
-    font-size: 12px;
-    color: var(--white-muted);
-    margin-bottom: 28px;
-  }
-
-  /* Tabs */
-  .tabs {
-    display: flex;
-    background: var(--black-3);
-    border-radius: 10px;
-    padding: 4px;
-    margin-bottom: 24px;
-    gap: 4px;
-  }
-
-  .tab {
-    flex: 1;
-    padding: 9px;
-    border: none;
-    border-radius: 8px;
-    background: none;
-    color: var(--white-muted);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .tab.active {
-    background: linear-gradient(135deg, var(--neon-dark), var(--neon));
-    color: var(--black);
-    box-shadow: 0 0 12px var(--neon-dim);
-  }
-
-  /* Form */
-  .form-group { margin-bottom: 14px; }
-
-  label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--white-muted);
-    margin-bottom: 6px;
-  }
-
-  input[type="text"],
-  input[type="email"],
-  input[type="password"] {
-    width: 100%;
-    background: var(--black-4);
-    border: 1px solid #ffffff0d;
-    border-radius: 10px;
-    padding: 11px 14px;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 14px;
-    color: var(--white);
-    outline: none;
-    transition: all 0.2s;
-  }
-
-  input:focus {
-    border-color: var(--neon-dim);
-    box-shadow: 0 0 0 3px var(--neon-glow);
-    background: var(--black-3);
-  }
-
-  input::placeholder { color: var(--white-muted); }
-
-  .btn {
-    width: 100%;
-    padding: 13px;
-    border-radius: 10px;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 6px;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--neon-dark), var(--neon));
-    color: var(--black);
-    box-shadow: 0 0 20px var(--neon-dim);
-  }
-
-  .btn-primary:hover {
-    box-shadow: 0 0 30px var(--neon-dim), 0 0 60px var(--neon-glow);
-    transform: translateY(-1px);
-  }
-
-  .btn-face {
-    background: var(--black-4);
-    border: 1px solid var(--neon-dim);
-    color: var(--neon);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 13px;
-  }
-
-  .btn-face:hover {
-    background: var(--neon-glow);
-    box-shadow: 0 0 20px var(--neon-glow);
-  }
-
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 16px 0;
-    color: var(--white-muted);
-    font-size: 11px;
-  }
-
-  .divider::before, .divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #ffffff0d;
-  }
-
-  /* Error */
-  #errorMsg {
-    display: none;
-    background: #ff446615;
-    border: 1px solid #ff446640;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 12px;
-    color: var(--danger);
-    margin-top: 12px;
-    text-align: center;
-  }
-
-  /* ── Face Login Modal ─────────────────────── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: #000000bb;
-    backdrop-filter: blur(4px);
-    z-index: 999;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .modal-overlay.show { display: flex; }
-
-  .modal {
-    background: var(--black-2);
-    border: 1px solid #ffffff0d;
-    border-radius: 20px;
-    padding: 36px;
-    width: 90%;
-    max-width: 380px;
-    text-align: center;
-  }
-
-  .modal h2 { font-size: 18px; margin-bottom: 8px; }
-  .modal p { font-size: 12px; color: var(--white-muted); margin-bottom: 20px; }
-
-  .camera-circle {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin: 0 auto 16px;
-    border: 2px solid var(--black-4);
-    background: var(--black-3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition: border-color 0.3s;
-  }
-
-  .camera-circle.scanning {
-    border-color: var(--neon);
-    box-shadow: 0 0 24px var(--neon-dim);
-  }
-
-  .camera-circle.found {
-    border-color: var(--success);
-    box-shadow: 0 0 24px #00ffaa44;
-  }
-
-  .camera-circle.fail {
-    border-color: var(--danger);
-    box-shadow: 0 0 24px #ff446644;
-  }
-
-  #faceVideo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1);
-  }
-
-  .scan-ring {
-    position: absolute;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 2px dashed var(--neon);
-    animation: spin 3s linear infinite;
-    pointer-events: none;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  #faceStatus {
-    font-size: 13px;
-    color: var(--white-muted);
-    margin-bottom: 16px;
-    min-height: 20px;
-  }
-
-  #faceStatus.ok { color: var(--success); }
-  #faceStatus.err { color: var(--danger); }
-
-  .modal-btns {
-    display: flex;
-    gap: 10px;
-  }
-
-  .modal-btns .btn { margin-top: 0; }
-
-  .btn-cancel {
-    background: var(--black-4);
-    border: 1px solid #ffffff0d;
-    color: var(--white-muted);
-    font-family: 'Exo 2', sans-serif;
-  }
-
-  .btn-cancel:hover { border-color: #ffffff30; color: var(--white); }
-
-  .loading-dots {
-    display: inline-block;
-    animation: dots 1.2s infinite;
-  }
-
-  @keyframes dots {
-    0%, 20% { content: '.'; }
-    40% { content: '..'; }
-    60%, 100% { content: '...'; }
-  }
+  #faceStatus{font-size:13px;color:var(--white-muted);margin-bottom:16px;min-height:20px}
+  #faceStatus.ok{color:var(--success)}
+  #faceStatus.err{color:var(--danger)}
+  .modal-btns{display:flex;gap:10px}
+  .modal-btns .btn{margin-top:0}
+  .btn-cancel{background:var(--black-4);border:1px solid #ffffff0d;color:var(--white-muted);font-family:'Exo 2',sans-serif}
+  .btn-cancel:hover{border-color:#ffffff30;color:var(--white)}
 </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="logo-row">
-    <div class="logo">🐍</div>
-  </div>
+  <div class="logo-row"><div class="logo">🐍</div></div>
   <h1>PyTutor</h1>
   <p class="tagline">Your Personal Python Learning Assistant</p>
 
@@ -358,12 +112,8 @@
       <input type="password" id="loginPassword" placeholder="Your password" autocomplete="current-password">
     </div>
     <button class="btn btn-primary" onclick="doLogin()">→ Sign In</button>
-
     <div class="divider">or sign in with</div>
-
-    <button class="btn btn-face" onclick="openFaceLogin()">
-      😊 Face Recognition
-    </button>
+    <button class="btn btn-face" onclick="openFaceLogin()">😊 Face Recognition</button>
   </div>
 
   <!-- SIGNUP FORM -->
@@ -386,19 +136,16 @@
   <div id="errorMsg"></div>
 </div>
 
-<!-- ── FACE LOGIN MODAL ────────────────────── -->
+<!-- FACE LOGIN MODAL -->
 <div class="modal-overlay" id="faceModal">
   <div class="modal">
     <h2>😊 Face Login</h2>
     <p>Look directly at the camera. We'll recognize you automatically.</p>
-
     <div class="camera-circle" id="cameraCircle">
       <video id="faceVideo" autoplay muted playsinline></video>
       <div class="scan-ring"></div>
     </div>
-
-    <p id="faceStatus">Loading models<span class="loading-dots">...</span></p>
-
+    <p id="faceStatus">Starting camera...</p>
     <div class="modal-btns">
       <button class="btn btn-cancel" onclick="closeFaceModal()">Cancel</button>
     </div>
@@ -406,43 +153,37 @@
 </div>
 
 <script>
-const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+// BUG FIX: Use the correct weight URL that actually serves the files
+const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
 let modelsLoaded = false;
 let faceStream = null;
 let scanning = false;
 
-// ── Tabs ──────────────────────────────────────────────
+// ── Tabs ─────────────────────────────────────────────────────────
 function showTab(tab) {
-  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('loginForm').style.display  = tab === 'login'  ? 'block' : 'none';
   document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
-  document.getElementById('loginTab').className = 'tab' + (tab === 'login' ? ' active' : '');
+  document.getElementById('loginTab').className  = 'tab' + (tab === 'login'  ? ' active' : '');
   document.getElementById('signupTab').className = 'tab' + (tab === 'signup' ? ' active' : '');
   clearError();
 }
 
-// ── Error ─────────────────────────────────────────────
 function showError(msg) {
   const el = document.getElementById('errorMsg');
   el.textContent = msg;
   el.style.display = 'block';
 }
+function clearError() { document.getElementById('errorMsg').style.display = 'none'; }
 
-function clearError() {
-  document.getElementById('errorMsg').style.display = 'none';
-}
-
-// ── Login ─────────────────────────────────────────────
+// ── Login ─────────────────────────────────────────────────────────
 async function doLogin() {
   clearError();
-  const email = document.getElementById('loginEmail').value.trim();
+  const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
-
   if (!email || !password) return showError('Please fill in all fields.');
-
   try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res  = await fetch('/api/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
@@ -451,20 +192,17 @@ async function doLogin() {
   } catch (e) { showError('Connection error. Try again.'); }
 }
 
-// ── Signup ────────────────────────────────────────────
+// ── Signup ────────────────────────────────────────────────────────
 async function doSignup() {
   clearError();
-  const name = document.getElementById('signupName').value.trim();
-  const email = document.getElementById('signupEmail').value.trim();
+  const name     = document.getElementById('signupName').value.trim();
+  const email    = document.getElementById('signupEmail').value.trim();
   const password = document.getElementById('signupPassword').value;
-
   if (!name || !email || !password) return showError('Please fill in all fields.');
   if (password.length < 8) return showError('Password must be at least 8 characters.');
-
   try {
-    const res = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res  = await fetch('/api/signup', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
     });
     const data = await res.json();
@@ -473,25 +211,34 @@ async function doSignup() {
   } catch (e) { showError('Connection error. Try again.'); }
 }
 
-// ── Face Login ────────────────────────────────────────
+// ── Face Login ────────────────────────────────────────────────────
 async function openFaceLogin() {
   document.getElementById('faceModal').classList.add('show');
   document.getElementById('faceStatus').className = '';
-  document.getElementById('faceStatus').innerHTML = 'Loading models<span class="loading-dots">...</span>';
+  document.getElementById('faceStatus').textContent = 'Starting camera...';
   document.getElementById('cameraCircle').className = 'camera-circle';
   scanning = false;
 
   try {
-    faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    // BUG FIX: Wait for video metadata before starting detection
+    faceStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+    });
+
     const video = document.getElementById('faceVideo');
     video.srcObject = faceStream;
 
+    await new Promise((resolve, reject) => {
+      video.onloadedmetadata = () => video.play().then(resolve).catch(reject);
+      video.onerror = reject;
+    });
+
+    document.getElementById('faceStatus').textContent = 'Loading face recognition...';
+
     if (!modelsLoaded) {
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-      ]);
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
       modelsLoaded = true;
     }
 
@@ -501,7 +248,11 @@ async function openFaceLogin() {
     scanLoop();
 
   } catch (e) {
-    document.getElementById('faceStatus').textContent = 'Camera access denied.';
+    console.error('Face login error:', e);
+    const msg = e.name === 'NotAllowedError'
+      ? 'Camera permission denied. Allow camera and try again.'
+      : 'Error: ' + e.message;
+    document.getElementById('faceStatus').textContent = msg;
     document.getElementById('faceStatus').className = 'err';
   }
 }
@@ -510,9 +261,18 @@ async function scanLoop() {
   const video = document.getElementById('faceVideo');
   if (!scanning || !video.srcObject) return;
 
+  // BUG FIX: Check video is actually playing
+  if (video.readyState < 2) {
+    setTimeout(scanLoop, 200);
+    return;
+  }
+
   try {
     const det = await faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
+        inputSize: 320,
+        scoreThreshold: 0.35   // BUG FIX: lower threshold catches faces in webcam light
+      }))
       .withFaceLandmarks()
       .withFaceDescriptor();
 
@@ -522,9 +282,8 @@ async function scanLoop() {
       document.getElementById('cameraCircle').classList.add('found');
 
       const descriptor = Array.from(det.descriptor);
-      const res = await fetch('/api/face/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res  = await fetch('/api/face/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ descriptor })
       });
       const data = await res.json();
@@ -535,7 +294,7 @@ async function scanLoop() {
         stopFaceCamera();
         setTimeout(() => window.location.href = data.redirect, 1000);
       } else {
-        document.getElementById('faceStatus').textContent = data.error;
+        document.getElementById('faceStatus').textContent = data.error || 'Face not recognized.';
         document.getElementById('faceStatus').className = 'err';
         document.getElementById('cameraCircle').classList.remove('found');
         document.getElementById('cameraCircle').classList.add('fail');
@@ -549,6 +308,7 @@ async function scanLoop() {
         }, 2500);
       }
     } else {
+      // BUG FIX: use setTimeout not recursion — prevents call stack overflow
       setTimeout(scanLoop, 400);
     }
   } catch (e) {
@@ -562,6 +322,8 @@ function stopFaceCamera() {
     faceStream.getTracks().forEach(t => t.stop());
     faceStream = null;
   }
+  const v = document.getElementById('faceVideo');
+  v.srcObject = null;
 }
 
 function closeFaceModal() {
@@ -569,7 +331,6 @@ function closeFaceModal() {
   document.getElementById('faceModal').classList.remove('show');
 }
 
-// ── Enter key support ─────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     if (document.getElementById('loginForm').style.display !== 'none') doLogin();
