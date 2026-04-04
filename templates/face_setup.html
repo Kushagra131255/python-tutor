@@ -6,248 +6,98 @@
 <title>PyTutor — Set Up Face Login</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<!-- face-api.js loaded WITHOUT defer so it is available synchronously -->
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
   :root {
-    --black: #050508;
-    --black-2: #0c0c12;
-    --black-3: #111118;
-    --black-4: #18181f;
-    --neon: #00c8ff;
-    --neon-dim: #00c8ff55;
-    --neon-glow: #00c8ff22;
-    --neon-dark: #0090bb;
-    --white: #f0f4ff;
-    --white-dim: #a0aac0;
-    --white-muted: #5a6070;
-    --danger: #ff4466;
-    --success: #00ffaa;
+    --black:#050508;--black-2:#0c0c12;--black-3:#111118;--black-4:#18181f;
+    --neon:#00c8ff;--neon-dim:#00c8ff55;--neon-glow:#00c8ff22;--neon-dark:#0090bb;
+    --white:#f0f4ff;--white-dim:#a0aac0;--white-muted:#5a6070;
+    --danger:#ff4466;--success:#00ffaa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Exo 2',sans-serif;background:var(--black);color:var(--white);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  body::before{content:'';position:fixed;inset:0;
+    background-image:linear-gradient(#ffffff03 1px,transparent 1px),linear-gradient(90deg,#ffffff03 1px,transparent 1px);
+    background-size:40px 40px;pointer-events:none}
+  .card{background:var(--black-2);border:1px solid #ffffff0d;border-radius:20px;
+    padding:40px 36px;width:100%;max-width:460px;position:relative;z-index:1;text-align:center}
+  .logo{font-size:40px;margin-bottom:8px;filter:drop-shadow(0 0 12px var(--neon))}
+  h1{font-size:22px;font-weight:700;
+    background:linear-gradient(90deg,var(--neon),#7df9ff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+  .subtitle{font-size:13px;color:var(--white-muted);line-height:1.5;margin-bottom:28px}
+  .steps{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:28px}
+  .step{width:8px;height:8px;border-radius:50%;background:var(--black-4);border:1px solid var(--white-muted)}
+  .step.done{background:var(--neon);border-color:var(--neon)}
+  .step.active{background:var(--neon-dim);border-color:var(--neon);box-shadow:0 0 8px var(--neon-dim)}
+
+  /* ── Camera wrap ── */
+  .camera-wrap{position:relative;width:220px;height:220px;margin:0 auto 20px;
+    border-radius:50%;overflow:hidden;border:2px solid var(--black-4);
+    background:var(--black-3);display:flex;align-items:center;justify-content:center;
+    transition:border-color 0.3s,box-shadow 0.3s}
+  .camera-wrap.active{border-color:var(--neon);box-shadow:0 0 24px var(--neon-dim)}
+  .camera-wrap.success{border-color:var(--success);box-shadow:0 0 24px #00ffaa44}
+  .camera-wrap.error{border-color:var(--danger);box-shadow:0 0 24px #ff446644}
+
+  /* BUG FIX: video must fill the circle and be visible */
+  #video{
+    position:absolute;top:0;left:0;
+    width:100%;height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
+    display:none;           /* hidden until camera opens */
+    border-radius:50%;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .camera-placeholder{display:flex;flex-direction:column;align-items:center;
+    gap:8px;color:var(--white-muted);z-index:1}
+  .camera-placeholder .icon{font-size:48px}
+  .camera-placeholder p{font-size:12px}
 
-  body {
-    font-family: 'Exo 2', sans-serif;
-    background: var(--black);
-    color: var(--white);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+  .face-ring{position:absolute;width:140px;height:140px;border-radius:50%;
+    border:2px dashed var(--neon);top:50%;left:50%;
+    transform:translate(-50%,-50%);display:none;
+    animation:spinRing 4s linear infinite;z-index:2;pointer-events:none}
+  @keyframes spinRing{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+  #statusText{font-size:13px;color:var(--white-muted);margin-bottom:20px;min-height:20px}
+  #statusText.success{color:var(--success)}
+  #statusText.error{color:var(--danger)}
+
+  /* ── Progress bar ── */
+  .loading-bar{width:100%;height:3px;background:var(--black-4);border-radius:3px;
+    overflow:hidden;margin-bottom:16px;display:none}
+  .loading-bar.show{display:block}
+  .loading-bar-fill{height:100%;
+    background:linear-gradient(90deg,var(--neon-dark),var(--neon));
+    border-radius:3px;animation:loadBar 1.5s ease-in-out infinite}
+  @keyframes loadBar{0%{width:0%;margin-left:0}50%{width:70%;margin-left:15%}100%{width:0%;margin-left:100%}}
+
+  /* ── Buttons ── */
+  .btn{width:100%;padding:13px;border-radius:10px;font-family:'Exo 2',sans-serif;
+    font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;margin-bottom:10px}
+  .btn-primary{background:linear-gradient(135deg,var(--neon-dark),var(--neon));
+    color:#050508;box-shadow:0 0 20px var(--neon-dim)}
+  .btn-primary:hover{box-shadow:0 0 30px var(--neon-dim),0 0 60px var(--neon-glow);transform:translateY(-1px)}
+  .btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+  .btn-ghost{background:transparent;border:1px solid #ffffff15;color:var(--white-muted)}
+  .btn-ghost:hover{border-color:#ffffff30;color:var(--white)}
+
+  .divider{display:flex;align-items:center;gap:12px;margin:4px 0 12px;color:var(--white-muted);font-size:11px}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:#ffffff0d}
+
+  /* ── Face detect indicator ── */
+  #faceDetectBadge{
+    display:inline-block;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;
+    letter-spacing:.5px;margin-bottom:12px;
+    background:#ffffff0a;border:1px solid #ffffff15;color:var(--white-muted);
+    transition:all 0.3s;
   }
-
-  /* Grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(#ffffff03 1px, transparent 1px),
-      linear-gradient(90deg, #ffffff03 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-  }
-
-  .card {
-    background: var(--black-2);
-    border: 1px solid #ffffff0d;
-    border-radius: 20px;
-    padding: 40px 36px;
-    width: 100%;
-    max-width: 460px;
-    position: relative;
-    z-index: 1;
-    text-align: center;
-  }
-
-  .logo {
-    font-size: 40px;
-    margin-bottom: 8px;
-    filter: drop-shadow(0 0 12px var(--neon));
-  }
-
-  h1 {
-    font-size: 22px;
-    font-weight: 700;
-    background: linear-gradient(90deg, var(--neon), #7df9ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 6px;
-  }
-
-  .subtitle {
-    font-size: 13px;
-    color: var(--white-muted);
-    line-height: 1.5;
-    margin-bottom: 28px;
-  }
-
-  /* Step indicator */
-  .steps {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 28px;
-  }
-
-  .step {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--black-4);
-    border: 1px solid var(--white-muted);
-  }
-
-  .step.done { background: var(--neon); border-color: var(--neon); }
-  .step.active { background: var(--neon-dim); border-color: var(--neon); box-shadow: 0 0 8px var(--neon-dim); }
-
-  /* Camera container */
-  .camera-wrap {
-    position: relative;
-    width: 220px;
-    height: 220px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px solid var(--black-4);
-    background: var(--black-3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.3s;
-  }
-
-  .camera-wrap.active { border-color: var(--neon); box-shadow: 0 0 24px var(--neon-dim); }
-  .camera-wrap.success { border-color: var(--success); box-shadow: 0 0 24px #00ffaa44; }
-  .camera-wrap.error { border-color: var(--danger); box-shadow: 0 0 24px #ff446644; }
-
-  #video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1); /* mirror */
-    display: none;
-  }
-
-  .camera-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    color: var(--white-muted);
-  }
-
-  .camera-placeholder .icon { font-size: 48px; }
-  .camera-placeholder p { font-size: 12px; }
-
-  /* Face overlay ring animation */
-  .face-ring {
-    position: absolute;
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    border: 2px dashed var(--neon);
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    display: none;
-    animation: spin 4s linear infinite;
-  }
-
-  @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
-
-  /* Status text */
-  #statusText {
-    font-size: 13px;
-    color: var(--white-muted);
-    margin-bottom: 20px;
-    min-height: 20px;
-  }
-
-  #statusText.success { color: var(--success); }
-  #statusText.error { color: var(--danger); }
-
-  /* Buttons */
-  .btn {
-    width: 100%;
-    padding: 13px;
-    border-radius: 10px;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-bottom: 10px;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--neon-dark), var(--neon));
-    color: #050508;
-    box-shadow: 0 0 20px var(--neon-dim);
-  }
-
-  .btn-primary:hover {
-    box-shadow: 0 0 30px var(--neon-dim), 0 0 60px var(--neon-glow);
-    transform: translateY(-1px);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-
-  .btn-ghost {
-    background: transparent;
-    border: 1px solid #ffffff15;
-    color: var(--white-muted);
-  }
-
-  .btn-ghost:hover { border-color: #ffffff30; color: var(--white); }
-
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 4px 0 12px;
-    color: var(--white-muted);
-    font-size: 11px;
-  }
-
-  .divider::before, .divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #ffffff0d;
-  }
-
-  .loading-bar {
-    width: 100%;
-    height: 3px;
-    background: var(--black-4);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 16px;
-    display: none;
-  }
-
-  .loading-bar.show { display: block; }
-
-  .loading-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--neon-dark), var(--neon));
-    border-radius: 3px;
-    animation: load 1.5s ease-in-out infinite;
-  }
-
-  @keyframes load {
-    0% { width: 0%; margin-left: 0; }
-    50% { width: 70%; margin-left: 15%; }
-    100% { width: 0%; margin-left: 100%; }
-  }
+  #faceDetectBadge.detected{background:#00ffaa15;border-color:#00ffaa55;color:var(--success)}
+  #faceDetectBadge.none{background:#ff446615;border-color:#ff446640;color:var(--danger)}
 </style>
 </head>
 <body>
@@ -268,9 +118,13 @@
       <div class="icon">📷</div>
       <p>Camera preview</p>
     </div>
+    <!-- BUG FIX: video is inside wrap, absolutely positioned to fill it -->
     <video id="video" autoplay muted playsinline></video>
     <div class="face-ring" id="faceRing"></div>
   </div>
+
+  <!-- Live face detect badge — shows whether a face is currently seen -->
+  <div id="faceDetectBadge" style="display:none;">No face detected</div>
 
   <p id="statusText">Click "Open Camera" to begin</p>
 
@@ -283,112 +137,195 @@
   <button class="btn btn-primary" id="doneBtn" onclick="goToChat()" style="display:none;">🚀 Go to PyTutor</button>
 
   <div class="divider">or</div>
-
   <button class="btn btn-ghost" onclick="skipSetup()">Skip for now →</button>
 </div>
 
 <script>
-const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+// BUG FIX: Use the correct CDN path for weights
+// face-api.js weights must be served from a path your browser can reach.
+// The CDN hosts them at this path:
+const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+
 let modelsLoaded = false;
 let stream = null;
+let previewRunning = false;
 
-// ── Load models ───────────────────────────────────────
+// ── Load models ─────────────────────────────────────────────────
 async function loadModels() {
   setStatus('Loading face recognition models...', '');
   document.getElementById('loadingBar').classList.add('show');
+
   try {
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-    ]);
+    // BUG FIX: Use the correct model path. The original MODEL_URL
+    // "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights"
+    // often 404s for weights on CDN. We use @vladmandic/face-api model CDN
+    // which reliably hosts the weight files.
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+
     modelsLoaded = true;
     document.getElementById('loadingBar').classList.remove('show');
-    setStatus('Models ready. Position your face in the circle.', '');
+    setStatus('✅ Models loaded! Position your face in the circle.', '');
     document.getElementById('captureBtn').disabled = false;
     document.getElementById('faceRing').style.display = 'block';
+    document.getElementById('faceDetectBadge').style.display = 'inline-block';
     startFacePreview();
   } catch (e) {
     document.getElementById('loadingBar').classList.remove('show');
-    setStatus('Failed to load models. Please refresh.', 'error');
+    console.error('Model load error:', e);
+    setStatus('⚠️ Failed to load models. Check internet connection and refresh.', 'error');
+    // Re-show open camera button so user can retry
+    document.getElementById('openCamBtn').style.display = 'block';
+    document.getElementById('captureBtn').style.display = 'none';
   }
 }
 
-// ── Open camera ───────────────────────────────────────
+// ── Open camera ─────────────────────────────────────────────────
 async function openCamera() {
   document.getElementById('openCamBtn').style.display = 'none';
   document.getElementById('captureBtn').style.display = 'block';
   setStatus('Starting camera...', '');
 
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    // BUG FIX: request higher resolution so face-api can detect properly
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'user',
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      }
+    });
+
     const video = document.getElementById('video');
     video.srcObject = stream;
+
+    // BUG FIX: Wait for video to actually be playing before loading models
+    // Previously models loaded before video was ready → detection always failed
+    await new Promise((resolve, reject) => {
+      video.onloadedmetadata = () => {
+        video.play()
+          .then(resolve)
+          .catch(reject);
+      };
+      video.onerror = reject;
+    });
+
+    // Now show the video
     video.style.display = 'block';
     document.getElementById('placeholder').style.display = 'none';
     document.getElementById('cameraWrap').classList.add('active');
+
     await loadModels();
+
   } catch (e) {
-    setStatus('Camera access denied. Please allow camera access.', 'error');
+    console.error('Camera error:', e);
+    if (e.name === 'NotAllowedError') {
+      setStatus('❌ Camera permission denied. Please allow camera access and refresh.', 'error');
+    } else if (e.name === 'NotFoundError') {
+      setStatus('❌ No camera found on this device.', 'error');
+    } else {
+      setStatus('❌ Camera error: ' + e.message, 'error');
+    }
     document.getElementById('openCamBtn').style.display = 'block';
     document.getElementById('captureBtn').style.display = 'none';
   }
 }
 
-// ── Live face preview ─────────────────────────────────
+// ── Live face preview (shows badge: face detected / not detected) ─
 async function startFacePreview() {
+  if (previewRunning) return;
+  previewRunning = true;
+
   const video = document.getElementById('video');
-  const ring = document.getElementById('faceRing');
+  const ring  = document.getElementById('faceRing');
+  const badge = document.getElementById('faceDetectBadge');
 
   async function detect() {
-    if (!video.srcObject) return;
+    // Stop loop if camera was closed
+    if (!video.srcObject || !previewRunning) return;
+
     try {
-      const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions());
+      const det = await faceapi.detectSingleFace(
+        video,
+        new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 })
+      );
+
       if (det) {
-        ring.style.borderColor = '#00c8ff';
-        ring.style.borderStyle = 'solid';
+        ring.style.borderColor  = '#00c8ff';
+        ring.style.borderStyle  = 'solid';
+        badge.textContent       = '✅ Face detected!';
+        badge.className         = 'detected';
       } else {
-        ring.style.borderColor = '#5a6070';
-        ring.style.borderStyle = 'dashed';
+        ring.style.borderColor  = '#5a6070';
+        ring.style.borderStyle  = 'dashed';
+        badge.textContent       = 'No face detected';
+        badge.className         = 'none';
       }
-    } catch(e) {}
-    requestAnimationFrame(detect);
+    } catch (e) {
+      // Silently retry
+    }
+
+    // BUG FIX: Use setTimeout instead of requestAnimationFrame
+    // rAF runs as fast as possible and hammers face-api, causing it to queue
+    // up and slow detection to a crawl. 300ms interval is plenty fast.
+    setTimeout(detect, 300);
   }
+
   detect();
 }
 
-// ── Capture and register ──────────────────────────────
+// ── Capture and register ─────────────────────────────────────────
 async function captureAndRegister() {
-  if (!modelsLoaded) return;
+  if (!modelsLoaded) {
+    setStatus('Models still loading, please wait...', '');
+    return;
+  }
 
   const video = document.getElementById('video');
+
+  // BUG FIX: Check video is actually playing
+  if (video.readyState < 2) {
+    setStatus('Camera not ready yet, please wait a moment.', 'error');
+    return;
+  }
+
   const btn = document.getElementById('captureBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Processing...';
   setStatus('Detecting your face...', '');
 
   try {
+    // BUG FIX: Use explicit TinyFaceDetectorOptions with lower threshold
+    // Default threshold 0.5 often rejects valid faces in webcam lighting.
     const detection = await faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
+        inputSize: 416,        // larger = more accurate (but slower)
+        scoreThreshold: 0.35   // lower = more lenient detection
+      }))
       .withFaceLandmarks()
       .withFaceDescriptor();
 
     if (!detection) {
-      setStatus('No face detected. Make sure your face is clearly visible.', 'error');
+      setStatus('❌ No face detected. Ensure good lighting and look directly at camera.', 'error');
       document.getElementById('cameraWrap').classList.add('error');
       setTimeout(() => {
         document.getElementById('cameraWrap').classList.remove('error');
         btn.disabled = false;
         btn.textContent = '😊 Capture My Face';
         setStatus('Try again — look directly at the camera.', '');
-      }, 2000);
+      }, 2500);
       return;
     }
 
-    // Convert descriptor Float32Array to regular array
     const descriptor = Array.from(detection.descriptor);
 
-    setStatus('Saving your face...', '');
+    // Sanity check — descriptor must be 128 floats
+    if (descriptor.length !== 128) {
+      throw new Error('Invalid face descriptor length: ' + descriptor.length);
+    }
+
+    setStatus('Saving your face to the database...', '');
 
     const res = await fetch('/api/face/register', {
       method: 'POST',
@@ -399,48 +336,47 @@ async function captureAndRegister() {
     const data = await res.json();
 
     if (res.ok) {
+      previewRunning = false;
       stopCamera();
       document.getElementById('cameraWrap').classList.remove('active');
       document.getElementById('cameraWrap').classList.add('success');
       document.getElementById('faceRing').style.display = 'none';
+      document.getElementById('faceDetectBadge').style.display = 'none';
       document.getElementById('captureBtn').style.display = 'none';
       document.getElementById('doneBtn').style.display = 'block';
       setStatus('✅ Face registered! You can now log in with your face.', 'success');
     } else {
-      throw new Error(data.error || 'Registration failed');
+      throw new Error(data.error || 'Server rejected the registration');
     }
 
-  } catch(e) {
-    setStatus('Error: ' + e.message, 'error');
+  } catch (e) {
+    console.error('Capture error:', e);
+    setStatus('❌ Error: ' + e.message, 'error');
     btn.disabled = false;
     btn.textContent = '😊 Capture My Face';
   }
 }
 
-// ── Helpers ───────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────
 function setStatus(msg, type) {
   const el = document.getElementById('statusText');
   el.textContent = msg;
-  el.className = type;
+  el.className = type || '';
 }
 
 function stopCamera() {
+  previewRunning = false;
   if (stream) {
     stream.getTracks().forEach(t => t.stop());
     stream = null;
   }
-  document.getElementById('video').style.display = 'none';
+  const v = document.getElementById('video');
+  v.srcObject = null;
+  v.style.display = 'none';
 }
 
-function goToChat() {
-  stopCamera();
-  window.location.href = '/';
-}
-
-function skipSetup() {
-  stopCamera();
-  window.location.href = '/';
-}
+function goToChat()    { stopCamera(); window.location.href = '/'; }
+function skipSetup()   { stopCamera(); window.location.href = '/'; }
 </script>
 </body>
 </html>
