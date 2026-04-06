@@ -7,6 +7,13 @@ from knowledge_base import (
 )
 from quiz_module import QuizRunner
 
+# Try to import Groq — works when API key is set
+try:
+    from groq_api import ask_groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+
 
 class PythonTutorBot:
 
@@ -20,7 +27,7 @@ class PythonTutorBot:
         msg = user_input.lower().strip()
 
         # ==========================
-        # QUIZ MODE
+        # QUIZ MODE (always handled locally)
         # ==========================
         if self.quiz and self.current_q:
 
@@ -32,7 +39,6 @@ class PythonTutorBot:
             if msg in ["a", "b", "c", "d"]:
                 result = self.quiz.check_answer(self.current_q, msg)
                 next_q = self.quiz.get_question()
-
                 if next_q:
                     self.current_q = next_q
                     return result + "\n\n" + self.format_question(next_q)
@@ -44,11 +50,10 @@ class PythonTutorBot:
 
             return "👉 Please answer with A, B, C, or D (or type 'exit' to quit quiz)"
 
-
         # ==========================
-        # START QUIZ
+        # START QUIZ (always handled locally)
         # ==========================
-        if "quiz" in msg:
+        if msg == "quiz":
             self.quiz = QuizRunner()
             self.current_q = self.quiz.get_question()
             return (
@@ -61,26 +66,33 @@ class PythonTutorBot:
                 self.format_question(self.current_q)
             )
 
+        # ==========================
+        # CHEAT SHEET (always local)
+        # ==========================
+        if msg in ["cheat sheet", "cheatsheet"]:
+            return CHEAT_SHEET
 
         # ==========================
-        # COMMANDS
+        # HELP command
         # ==========================
         if msg == "help":
-            return """
-📋 AVAILABLE COMMANDS
+            return """📋 AVAILABLE COMMANDS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🧪 quiz         - Start an interactive quiz
 📚 topics       - See all available topics
 🗺️ roadmap      - Learning path for beginners
 📝 cheat sheet  - Quick reference guide
-📖 explain [topic] - Learn about a specific topic
+🤖 AI Mode      - Just ask me ANYTHING about Python!
 
-💡 Just ask me anything about Python!
-   Examples: "what is a list?", "how do loops work?", "explain functions"
+💡 Examples:
+   "what is a decorator?"
+   "how does async/await work?"
+   "write a function to reverse a string"
+   "explain OOP with an example"
 
 🔧 Error Help
-   Just type the error name like "NameError" or "syntaxerror"
+   Just describe your error and I'll help fix it!
 """
 
         if msg == "topics":
@@ -90,13 +102,11 @@ class PythonTutorBot:
 
 {topic_names}
 
-💡 Just ask me about any topic above!
-   Example: "explain lists" or "what is a dictionary?"
+💡 Just ask me about any topic above — or anything else Python related!
 """
 
         if msg == "roadmap":
-            return """
-🗺️ PYTHON LEARNING ROADMAP
+            return """🗺️ PYTHON LEARNING ROADMAP
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📌 STEP 1: Basics
@@ -110,42 +120,42 @@ class PythonTutorBot:
    • List Comprehensions
 
 📌 STEP 3: Data Structures
-   • Lists (mutable arrays)
-   • Tuples (immutable arrays)
-   • Dictionaries (key-value pairs)
-   • Sets (unique values)
+   • Lists, Tuples, Dictionaries, Sets
 
 📌 STEP 4: Functions
-   • Defining Functions
-   • Parameters & Arguments
-   • *args & **kwargs
-   • Lambda Functions
-   • Scope & Closures
+   • Defining Functions, *args/**kwargs
+   • Lambda, Scope & Closures
 
 📌 STEP 5: OOP
-   • Classes & Objects
-   • Inheritance
-   • Methods & Properties
-   • Magic Methods
+   • Classes, Inheritance, Magic Methods
 
 📌 STEP 6: Advanced
-   • Error Handling
-   • File I/O
-   • Modules & Packages
-   • Decorators
-   • Generators
+   • Error Handling, File I/O
+   • Decorators, Generators, Async
 
-💡 Start with Step 1 and work your way up!
-   Type 'quiz' anytime to test your knowledge.
+💡 Type 'quiz' anytime to test your knowledge!
 """
 
-        if msg == "cheat sheet" or msg == "cheatsheet":
-            return CHEAT_SHEET
-
+        # ==========================
+        # LOG user message
+        # ==========================
+        self._log("user", user_input)
 
         # ==========================
-        # ERROR HELP
+        # TRY GROQ AI FIRST
         # ==========================
+        if GROQ_AVAILABLE:
+            ai_response = ask_groq(user_input, self.history)
+            if ai_response and not ai_response.startswith("⚠️"):
+                self._log("assistant", ai_response)
+                return ai_response
+            # If Groq returned a warning, fall through to knowledge base
+
+        # ==========================
+        # FALLBACK: Knowledge Base
+        # ==========================
+
+        # Error help
         error_help = find_error_help(msg)
         if error_help:
             return f"""🐛 COMMON PYTHON ERRORS
@@ -156,12 +166,8 @@ class PythonTutorBot:
 💡 Need more help? Describe your error and I'll assist you!
 """
 
-
-        # ==========================
-        # TOPIC SEARCH (SMART)
-        # ==========================
+        # Topic search
         topic = find_topic(msg)
-
         if topic:
             return f"""📖 {topic['title'].upper()}
 {'='*45}
@@ -184,37 +190,23 @@ class PythonTutorBot:
 💬 Ask me more questions or type 'quiz' to test yourself!
 """
 
-
         # ==========================
         # DEFAULT RESPONSE
         # ==========================
-        return """🤖 Welcome to PyTutor - Your Python Learning Assistant!
+        return """🤖 I'm PyTutor — Your AI Python Learning Assistant!
 
-I can help you learn Python through:
+Ask me anything about Python:
 
-📚 TOPIC EXPLANATIONS
-   Just ask me anything like:
    • "what is a list?"
    • "how do loops work?"
-   • "explain functions"
-   • "what is OOP?"
+   • "explain decorators"
+   • "help me debug my code"
 
-🧪 INTERACTIVE QUIZ
-   Type 'quiz' to test your knowledge!
-
-🔧 ERROR HELP
-   Describe any error you're facing
-
-📝 CODE EXAMPLES
-   I provide hands-on examples for each topic
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💬 What would you like to learn today?
+Or type 'quiz' to test your knowledge!
 """
 
-
     def format_question(self, q):
-        return f"""📌 Question {q.get('difficulty', 'beginner').title()}:
+        return f"""📌 Question ({q.get('difficulty', 'beginner').title()}):
 
 {q['question']}
 
@@ -223,28 +215,26 @@ I can help you learn Python through:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💬 Your answer (A/B/C/D):"""
 
-
     def get_welcome_message(self):
-        return """🐍 Welcome to PyTutor!
+        mode = "🤖 AI-Powered" if GROQ_AVAILABLE else "📚 Knowledge Base"
+        return f"""🐍 Welcome to PyTutor! ({mode} Mode)
 
-I'm your personal Python learning assistant. 
+I'm your personal Python learning assistant.
 
 ✨ WHAT I CAN DO:
    📚 Explain any Python topic
-   🧪 Run interactive quizzes  
-   🔧 Help debug errors
+   🧪 Run interactive quizzes
+   🔧 Help debug your errors
    📝 Provide code examples
-   💡 Share tips & best practices
+   💡 Answer ANY Python question
 
 🚀 GET STARTED:
    • Type 'help' for all commands
-   • Type 'topics' to see what I know
    • Type 'quiz' to test yourself
    • Or just ask me anything!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💬 What would you like to learn about Python?"""
-
 
     def _log(self, role, content):
         self.history.append({
