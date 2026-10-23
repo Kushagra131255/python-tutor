@@ -13,10 +13,10 @@ A growing collection of individual C++ solutions, with difficulty, approach, and
 - These are independently written learning solutions. Problem statements are summarized, not copied.
 
 ## Progress
-- [x] 0001–0010 — initial batch
-- [ ] 0011–0600 — not yet added
+- [x] 0001–0020 — initial two batches committed
+- [ ] 0021–0600 — not yet added
 
 ## Compile locally
-Most files can be compiled after adding a small test harness that calls the method, because LeetCode supplies the driver code.
+Most files can be compiled after adding a small test harness that calls the method, because LeetCode supplies the driver code. Linked-list solutions rely on LeetCode's provided `ListNode` definition.
 
-Do not treat a checked-off problem as verified against every edge case unless tests are recorded for it.
+Progress indicates files committed, not that every solution has been run against all edge cases. Add and run tests as the collection grows.
