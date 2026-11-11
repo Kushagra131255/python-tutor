@@ -13,9 +13,7 @@ A growing collection of individual C++ solutions, with difficulty, approach, and
 - These are independently written learning solutions. Problem statements are summarized, not copied.
 
 ## Progress
-- [x] 0001–0058 — solutions committed
-- [ ] 0059 — not yet added
-- [x] 0060–0063 — solutions committed
+- [x] 0001–0063 — solutions committed
 - [ ] 0064–0600 — not yet added
 
 ## Compile locally
