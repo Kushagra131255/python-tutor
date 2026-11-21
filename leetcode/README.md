@@ -13,8 +13,8 @@ A growing collection of individual C++ solutions, with difficulty, approach, and
 - These are independently written learning solutions. Problem statements are summarized, not copied.
 
 ## Progress
-- [x] 0001–0085 — solutions committed (85/600; 14.17%)
-- [ ] 0086–0600 — not yet added (515 remaining)
+- [x] 0001–0086 — solutions committed (86/600; 14.33%)
+- [ ] 0087–0600 — not yet added (514 remaining)
 
 ## Compile locally
 Most files can be compiled after adding a small test harness that calls the method, because LeetCode supplies the driver code. Linked-list solutions rely on LeetCode's provided `ListNode` definition.
